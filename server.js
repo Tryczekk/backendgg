@@ -44,11 +44,13 @@ const corsOptions = {
     
     const allowedOrigins = [
       process.env.FRONTEND_URL,
+      'https://xyzobywatel404.netlify.app',
       'http://localhost:3000',
       'http://localhost:8080',
       'http://127.0.0.1:3000',
       'http://127.0.0.1:8080',
-      'https://your-frontend-domain.com' // Zmień na swoją domenę
+      'https://localhost:3000',
+      'https://127.0.0.1:3000'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -73,7 +75,16 @@ app.use(cookieParser());
 // MongoDB connection
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI is not defined in environment variables');
+    }
+    
+    const mongoURI = process.env.MONGODB_URI.trim();
+    console.log('Attempting to connect to MongoDB with URI:', 
+      mongoURI.replace(/\/\/([^:]+):([^@]+)@/, '//[HIDDEN_CREDENTIALS]@')
+    );
+    
+    const conn = await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
@@ -83,6 +94,17 @@ const connectDB = async () => {
     process.exit(1);
   }
 };
+
+// Log environment configuration (safely)
+console.log('Environment Configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  MONGODB_URI: process.env.MONGODB_URI ? '[HIDDEN]' : 'undefined',
+  JWT_SECRET: process.env.JWT_SECRET ? '[HIDDEN]' : 'undefined',
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+  RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS
+});
 
 // Connect to database
 connectDB();
